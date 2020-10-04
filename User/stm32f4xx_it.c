@@ -31,7 +31,12 @@
 #include "stm32f4xx_it.h"
 #include "ucos_ii.h"
 #include "bsp_bluetooth.h"
+
 extern int ticks;
+short int  CAPTURE_STA_TIM1CH[4] = {0};
+int CAPTURE_VAL_TIM1CH[4];
+int  CAPTURE_UP_TIM1CH[4], CAPTURE_DOWN_TIM1CH[4];
+extern int VAL[4];
 /** @addtogroup Template_Project
   * @{
   */
@@ -188,7 +193,136 @@ void SysTick_Handler(void)
 /*  available peripheral interrupt handler's name please refer to the startup */
 /*  file (startup_stm32f4xx.s).                                               */
 /******************************************************************************/
+void TIM1_CC_IRQHandler(void)
+{    
+//    if(TIM_GetITStatus(TIM1, TIM_IT_Update) != RESET) {
+//        if((CAPTURE_STA_TIM1CH[1]&0x80) == 0) {            //还未捕获成功
+//            if(CAPTURE_STA_TIM1CH[1]&0x40) {            //已经捕获到高电平了
+//                if((CAPTURE_STA_TIM1CH[1]&0x3F)==0x3F) {            //高电平太长了
+//                    CAPTURE_STA_TIM1CH[1] |= 0x80;                //标记成功捕获了一次
+//                    CAPTURE_VAL_TIM1CH[1] = 0xFFFF;
+//                } else 
+//                    CAPTURE_VAL_TIM1CH[1]++;
+//            }
+//        get
+//        TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
+//    }
+//       
+	
+    if((CAPTURE_STA_TIM1CH[0]&0x80) == 0) {   			//还未捕获成功
+				
+        if(TIM_GetITStatus(TIM1, TIM_IT_CC1) != RESET) {    //捕获1发生捕获事件
+            if(CAPTURE_STA_TIM1CH[0]&0x40) {                    //捕获到一个下降沿
+                CAPTURE_STA_TIM1CH[0] |= 0x80;                    //标记成功捕获到一次高电平脉宽
+                CAPTURE_DOWN_TIM1CH[0] = TIM_GetCapture1(TIM1);
+                if(CAPTURE_DOWN_TIM1CH[0]>= CAPTURE_UP_TIM1CH[0]) 
+                    CAPTURE_VAL_TIM1CH[0] = CAPTURE_DOWN_TIM1CH[0] - CAPTURE_UP_TIM1CH[0];
+                else 
+                    CAPTURE_VAL_TIM1CH[0] = 0xffff + CAPTURE_DOWN_TIM1CH[0] - CAPTURE_UP_TIM1CH[0];
 
+                    TIM_OC1PolarityConfig(TIM1, TIM_ICPolarity_Rising);    //CC1P=0 设置为上升沿捕获
+            } else {                                        //还未开始，第一次捕获上升沿
+                CAPTURE_STA_TIM1CH[0] = 0;                    //清空
+                CAPTURE_VAL_TIM1CH[0] = 0;
+				
+                CAPTURE_UP_TIM1CH[0] = TIM_GetCapture1(TIM1);
+                CAPTURE_STA_TIM1CH[0]|= 0x40; 				//标记捕获到了上升沿
+			          TIM_OC1PolarityConfig(TIM1, TIM_ICPolarity_Falling);    //CC1P=1 设置为下降沿捕获
+            }    
+            TIM_ClearFlag(TIM1, TIM_FLAG_CC1);                                //清除状态标志
+        }
+    } 
+
+    if((CAPTURE_STA_TIM1CH[1]&0x80) == 0) {                    //还未捕获成功
+        if(TIM_GetITStatus(TIM1, TIM_IT_CC2) != RESET) {            //捕获2发生捕获事件
+            if(CAPTURE_STA_TIM1CH[1]&0x40) {                        //捕获到一个下降沿
+                CAPTURE_STA_TIM1CH[1] |= 0x80;                        //标记成功捕获到一次高电平脉宽
+                CAPTURE_DOWN_TIM1CH[1] = TIM_GetCapture2(TIM1);        //获取捕获2计数
+                if(CAPTURE_DOWN_TIM1CH[1] >= CAPTURE_UP_TIM1CH[1])
+                    CAPTURE_VAL_TIM1CH[1] = CAPTURE_DOWN_TIM1CH[1] - CAPTURE_UP_TIM1CH[1];
+                else
+                    CAPTURE_VAL_TIM1CH[1] =  CAPTURE_UP_TIM1CH[1] - CAPTURE_DOWN_TIM1CH[1];
+                TIM_OC2PolarityConfig(TIM1, TIM_ICPolarity_Rising);    //CC1P=0 设置为上升沿捕获
+            } else {                                                //还未开始，第一次捕获上升沿
+                CAPTURE_STA_TIM1CH[1] = 0;                            //清空
+                CAPTURE_VAL_TIM1CH[1] = 0;
+                CAPTURE_UP_TIM1CH[1] = TIM_GetCapture2(TIM1);
+                CAPTURE_STA_TIM1CH[1] |= 0x40;                //标记捕获到了上升沿
+                TIM_OC2PolarityConfig(TIM1, TIM_ICPolarity_Falling);    //CC1P=1 设置为下降沿捕获
+            }
+            TIM_ClearFlag(TIM1, TIM_FLAG_CC2);                                //清除状态标志    
+        }
+    }
+    
+    if((CAPTURE_STA_TIM1CH[2]&0x80) == 0) {                    //还未捕获成功
+        if(TIM_GetITStatus(TIM1, TIM_IT_CC3) != RESET) {            //捕获2发生捕获事件
+            if(CAPTURE_STA_TIM1CH[2]&0x40) {                        //捕获到一个下降沿
+                CAPTURE_STA_TIM1CH[2] |= 0x80;                        //标记成功捕获到一次高电平脉宽
+                CAPTURE_DOWN_TIM1CH[2] = TIM_GetCapture3(TIM1);        //获取捕获2计数
+                if(CAPTURE_DOWN_TIM1CH[2] >= CAPTURE_UP_TIM1CH[2])
+                    CAPTURE_VAL_TIM1CH[2] = CAPTURE_DOWN_TIM1CH[2] - CAPTURE_UP_TIM1CH[2];
+                else
+                    CAPTURE_VAL_TIM1CH[2] = 0xffff + CAPTURE_DOWN_TIM1CH[2] - CAPTURE_UP_TIM1CH[2];
+                TIM_OC3PolarityConfig(TIM1, TIM_ICPolarity_Rising);    //CC1P=0 设置为上升沿捕获
+            } else {                                                //还未开始，第一次捕获上升沿
+                CAPTURE_STA_TIM1CH[2] = 0;                            //清空
+                CAPTURE_VAL_TIM1CH[2] = 0;
+                CAPTURE_UP_TIM1CH[2] = TIM_GetCapture3(TIM1);
+                CAPTURE_STA_TIM1CH[2] |= 0x40;                //标记捕获到了上升沿
+                TIM_OC3PolarityConfig(TIM1, TIM_ICPolarity_Falling);    //CC1P=1 设置为下降沿捕获
+            }
+            TIM_ClearFlag(TIM1, TIM_FLAG_CC3);                                //清除状态标志        
+        }
+    } 
+    if((CAPTURE_STA_TIM1CH[3]&0x80) == 0) {                    //还未捕获成功
+        if(TIM_GetITStatus(TIM1, TIM_IT_CC4) != RESET) {            //捕获2发生捕获事件
+            if(CAPTURE_STA_TIM1CH[3]&0x40) {                        //捕获到一个下降沿
+                CAPTURE_STA_TIM1CH[3] |= 0x80;                        //标记成功捕获到一次高电平脉宽
+                CAPTURE_DOWN_TIM1CH[3] = TIM_GetCapture4(TIM1);        //获取捕获2计数
+                if(CAPTURE_DOWN_TIM1CH[3] >= CAPTURE_UP_TIM1CH[3])
+                    CAPTURE_VAL_TIM1CH[3] = CAPTURE_DOWN_TIM1CH[3] - CAPTURE_UP_TIM1CH[3];
+                else
+                    CAPTURE_VAL_TIM1CH[3] = 0xffff + CAPTURE_DOWN_TIM1CH[3] - CAPTURE_UP_TIM1CH[3];
+                TIM_OC4PolarityConfig(TIM1, TIM_ICPolarity_Rising);    //CC1P=0 设置为上升沿捕获
+            } else {                                                //还未开始，第一次捕获上升沿
+                CAPTURE_STA_TIM1CH[3] = 0;                            //清空
+                CAPTURE_VAL_TIM1CH[3] = 0;
+                CAPTURE_UP_TIM1CH[3] = TIM_GetCapture4(TIM1);
+                CAPTURE_STA_TIM1CH[3] |= 0x40;                //标记捕获到了上升沿
+                TIM_OC4PolarityConfig(TIM1, TIM_ICPolarity_Falling);    //CC1P=1 设置为下降沿捕获
+            }
+            TIM_ClearFlag(TIM1, TIM_FLAG_CC4);                                //清除状态标志        
+        }
+    }
+
+    //处理帧数据
+    if(CAPTURE_STA_TIM1CH[0]&0x80) {                                //成功捕获到了一次上升沿                                            //溢出时间总和
+      		 
+	//	printf("PWM  1 HIGH TIME: %d\n", CAPTURE_VAL_TIM1CH[0] );				//得到总的高电平时间
+      VAL[0]=CAPTURE_VAL_TIM1CH[0];
+			CAPTURE_STA_TIM1CH[0] = 0;
+    } 
+		
+    if(CAPTURE_STA_TIM1CH[1]&0x80) {                                //成功捕获到了一次上升沿                                            //溢出时间总和
+        printf("PWM  2 HIGH TIME: %d\n", CAPTURE_VAL_TIM1CH[1] );			//得到总的高电平时间
+			 VAL[1]=CAPTURE_VAL_TIM1CH[1];		
+//        printf("TIM1 CH2:%d\t", temp[1]);
+        CAPTURE_STA_TIM1CH[1] = 0;
+    } 
+    if(CAPTURE_STA_TIM1CH[2]&0x80) {                                //成功捕获到了一次上升沿                                        //溢出时间总和
+     //   printf("PWM  3 HIGH TIME: %d\n", CAPTURE_VAL_TIM1CH[2] );
+			 VAL[2]=CAPTURE_VAL_TIM1CH[1];
+//      printf("TIM1 CH3:%d\t", temp[2]);
+        CAPTURE_STA_TIM1CH[2] = 0;
+    } 
+    if(CAPTURE_STA_TIM1CH[3]&0x80) {                                //成功捕获到了一次上升沿                                            //溢出时间总和
+  //   printf("PWM 4 HIGH TIME: %d\n", CAPTURE_VAL_TIM1CH[3] );                            //得到总的高电平时间		
+   //  printf("TIM1 CH4:%d\t", temp[3]);
+			 VAL[3]=CAPTURE_VAL_TIM1CH[1];
+       CAPTURE_STA_TIM1CH[3] = 0;
+    }
+
+}
 /**
   * @brief  This function handles PPP interrupt request.
   * @param  None

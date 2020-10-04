@@ -10,11 +10,11 @@ void App_Task0(void *p_arg){
 	while(1){
 		OSTimeDly(1000);
 		MPU6050ReadAcc(Acel);
-		printf("╪скы╤хё╨%8d%8d%8d",Acel[0],Acel[1],Acel[2]);
+		printf("Е┼═И─÷Е╨╕О╪ %8d%8d%8d",Acel[0],Acel[1],Acel[2]);
 		MPU6050ReadGyro(Gyro);
-		printf("    мсбщргё╨%8d%8d%8d",Gyro[0],Gyro[1],Gyro[2]);
+		printf("    И≥─Х·╨Д╩╙О╪ %8d%8d%8d",Gyro[0],Gyro[1],Gyro[2]);
 		HMC_Read(Hmc);
-		printf("    ╢еа╕╪фё╨%8d%8d%8d\r\n",Hmc[0],Hmc[1],Hmc[2]);
+		printf("    Гё│Е┼⌡Х╝║О╪ %8d%8d%8d\r\n",Hmc[0],Hmc[1],Hmc[2]);
 		OSTimeDly(1000);
 	}
 }
